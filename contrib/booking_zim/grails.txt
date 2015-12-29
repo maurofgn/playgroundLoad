@@ -1,0 +1,94 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2015-12-25T09:07:48+01:00
+
+====== grails ======
+Created venerdì 25 dicembre 2015
+
+grails create-app playgroung
+cd playgroung
+
+Se sono state fatte modifiche allo schema del db, questo va ricreato
+
+grails db-reverse-engineer
+server hibernate 3. 
+attenzione alla versione della cache
+prima di eseguire il comando (solo la prima volta), lanciare una compilazione
+
+La classe playgroung\grails-app\domain\playgroung\Preno.groovy viene creata male.
+commentare la seguente riga ora unique: ["data", "campo_id"] come nell'esempio sotto:
+
+{{{code: lang="java" linenumbers="True"
+package playground
+
+class Preno {
+
+	Date data
+	Integer ora
+	Integer nrOre
+	Campo campo
+	Socio socio
+
+	static belongsTo = [Campo, Socio]
+
+	static mapping = {
+		version false
+	}
+
+	static constraints = {
+		//ora unique: ["data", "campo_id"]
+	}
+}
+}}}
+
+
+mentre la classe campo ha alcuni vincoli del tipo:
+
+{{{code: lang="java" linenumbers="True"
+package playground
+
+class Campo {
+
+	String nome
+	Integer tipo = 0
+	String descrizione
+	Integer aperturaOra = 8
+	Integer aperturaMin = 0
+	Integer chiusuraOra = 23
+	Integer intervalloOra = 0
+	Integer intervalloOre = 0
+	Integer sequenza = 0
+	Societa societa
+
+	static hasMany = [prenos: Preno]
+	static belongsTo = [Societa]
+
+	static mapping = {
+		version false
+	}
+
+	static constraints = {
+		tipo (nullable: false)
+		nome maxSize: 45
+		descrizione nullable: true, maxSize: 45
+		aperturaOra (nullable: false, min: 8, max: 22)
+		aperturaMin (nullable: false, min: 0, max: 59)
+		chiusuraOra (nullable: false, min: 8, max: 23)
+		intervalloOra(nullable: false, min: 0, max: 23)
+		intervalloOre(nullable: false, min: 0, max: 23)
+	}
+}
+
+}}}
+
+
+grails clean
+
+grails generate-all *
+
+Se serve caricare i dati di test, può esser fatto con:
+load.loadAll	
+
+grails run-app
+
+

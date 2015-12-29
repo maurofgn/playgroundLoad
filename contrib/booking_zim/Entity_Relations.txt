@@ -1,0 +1,48 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2015-12-23T15:07:23+01:00
+
+====== Entity Relations ======
+Created mercoledì 23 dicembre 2015
+
+===== Entità e Relazioni =====
+
+==== Società ====
+Una società ha i suoi dati anagrafici, gestisce uno o più campi da gioco, ha una serie di persone che ne governano la gestione, alla società appartengono una serie di soci ed ha una persona di riferimento a cui rivolgersi per richieste particolari
+
+==== Socio ====
+Un socio è una persona avente una serie di dati che defiscono il rapporto con la società (tessera, prio anno di tesseramento e prossima scadenza della tessera)
+
+==== Persona ====
+Persona. Contiene i dati anagrafici di una persona 
+Una persona può assumere nessuna, una o più cariche societarie
+Una persona può essere socio di una o più società
+Il ruolo definisce gli accessi alle funzionalità ed ai dati che la persona ha all'interno del sistema, per ora, può essere:
+* U = Utente (default)
+* A = Amministratore
+Un utente può fare una prenotazione e modificare la sua anagrafica, meno il campo ruolo che gli sarà reso invisibile
+Un utente amministratore può accedere a tutto (dati e funzioni)
+Il ruolo sarebbe stato opportuno metterlo in un'altra tabella e quindi creare una relazione (n:m) tra persona e ruolo, ma per semplicità, si è preferito lasciarlo all'interno della persona
+
+==== Carica ====
+Questa entità identifica le cariche di una società e per ogni carica qual'è la persona che lo ricopre. Il tipo identifica la carica, essendo queste un numero esiguo e conosciuto sono state identificate in una tabella fissa che riporto di seguito:
+1. Presidente
+2. Vicepresidente
+3. Segretario
+4. Probiviro
+5. Consigliere
+
+==== Campo ====
+L'entità campo definisce gli orari in cui si può avere accesso all'uso, un identificatore descrittivo (nome), una descrizione della caratteristiche e la tipologia del campo che può essere:
+1. sintetico
+2. terra rossa
+3. erba
+
+==== Prenotazione ====
+Una prenotazione è l'identificazione univoca nel tempo (giorno ed ora) della combinazione tra un campo da gioco ed una persona, questa non può avere sovrapposioni nel tempo, cioè una prenotazione di un campo per una data ed un ora deve avere una numero di ore successive e conseguitive che non possono essere presenti in altre prenotazioni.
+Una prenotazione può essere fatta da una persona che avrà a disposizione tutti i campi di società per cui la persona è socio valido (con scadenza della tessera in validità a meno di 45 giorni, parametro definito a livello di società)
+ 
+
+==== ERD ====
+
+{{./playground.png}}

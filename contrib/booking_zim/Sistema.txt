@@ -1,0 +1,76 @@
+Content-Type: text/x-zim-wiki
+Wiki-Format: zim 0.4
+Creation-Date: 2015-12-29T09:14:24+01:00
+
+====== Sistema ======
+Created martedì 29 dicembre 2015
+
+===== Filtri =====
+
+All'interno del file di configurazione di tomcat WEB-INF/web.xml c'è il seguente codice per la definizione dei filtri gestiti da tomcat
+
+{{{code: lang="xml" linenumbers="True"
+<filter>
+	<filter-name>RequestLoggingFilter</filter-name>
+	<filter-class>booking.filter.RequestLoggingFilter</filter-class>
+</filter>
+
+<filter>
+	<filter-name>AuthenticationFilter</filter-name>
+	<filter-class>booking.filter.AuthenticationFilter</filter-class>
+</filter>
+
+<filter-mapping>
+	<filter-name>RequestLoggingFilter</filter-name>
+	<url-pattern>/*</url-pattern>
+	<dispatcher>REQUEST</dispatcher>
+</filter-mapping>
+
+<filter-mapping>
+	<filter-name>AuthenticationFilter</filter-name>
+	<url-pattern>/*</url-pattern>
+</filter-mapping>
+}}}
+
+
+Il codice definisce due filtri, identificati da tomcat con RequestLoggingFilter e [[AuthenticationFilter]] (nomi di fantasia). Con questa definizione, tomcat, si fa carico di mandare in esecuzione le classi corrispondenti (rispettivamente booking.filter.RequestLoggingFilter e booking.filter.AuthenticationFilter)  ogni qual volta c'è una richiesta che soddisfa il pattern definito all'interno del tag filter-mapping.
+
+Il filtro chiamato RequestLoggingFilter è utilizzato per alimentare un log con le varie richieste ricevute, mentre il filtro AuthenticationFilter è usato per verificare se la sessione ha un account valido, nel qual caso non fa nulla , diversamente, dirotta la richiesta verso la form login che chiede i dati di account, l'action di questa form richiama una servlet (LoginServlet) che si fa carico di verificare le credenziali (utente e password), quindi se non sono corrette, ritorna alla form per una nuova richiesta, diversamente crea la sessione con le informazioni (id utente) per successive necessita (verifica sessione valida, utente che sta usando il sistema) dopo di che viene viene richiesto l'url di una jsp per il saluto di benvenuto (LoginSuccess.jsp).
+E' prevista anche una servlet (LogoutServlet) che ha lo scopo di eseguire il logout, questo viene fatto invalidando la sessione e  richiamando la form per un nuovo account login.html
+
+===== Servlet =====
+Le servlet non sono definite con il file web.xml, ma vengono definite attraverso javax.servlet.annotation.WebServlet all'interno del codice java , questa modalità risulta essere più semplice e diretta.
+
+Esempio di servlet con utilizzo di annotazioni @WebServlet("/LogoutServlet") : 
+
+{{{code: lang="java" linenumbers="True"
+package booking.servlet.session;
+
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+@WebServlet("/LogoutServlet")
+public class LogoutServlet extends HttpServlet {
+
+	private static final long serialVersionUID = -1;
+    
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/html");
+        HttpSession session = request.getSession(false);
+        if(session != null){
+            session.invalidate();
+        }
+        response.sendRedirect("login.html");
+    }
+}
+}}}
+
+
+
+
