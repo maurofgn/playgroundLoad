@@ -15,6 +15,7 @@ tomcat v.8.0
 jstl-1.2
 mysql-connector-java-5.1.23
 taglibs-standard-impl-1.2.5
+sitemesh 2.4.2
 
 
 ===== Step di sviluppo =====
