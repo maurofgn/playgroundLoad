@@ -5,6 +5,89 @@ Creation-Date: 2015-12-29T09:14:24+01:00
 ====== Sistema ======
 Created martedì 29 dicembre 2015
 
+
+===== Tecnologia usata =====
+
+java 1.7
+Eclipse		Platform 	(c) Copyright Eclipse contributors and others 2000, 2015.  All rights reserved. Version: 4.4.2.v20150204-1700
+MySQL	v.5.6
+tomcat v.8.0
+jstl-1.2
+mysql-connector-java-5.1.23
+taglibs-standard-impl-1.2.5
+
+
+===== Step di sviluppo =====
+
+{{./diagram.png?type=diagram}}
+
+
+
+
+===== CRUD =====
+
+per la parte CRUD (Create Read Update Delete) delle tabelle
+
+org.mf.model.//tabella//.java
+org.mf.controller.//tabella//Controller.java
+org.mf.controller.//tabella//Dao.java
+WebContent/list//tabella//.jsp
+WebContent///tabella//.jsp
+
+===== Sottosistemi =====
+
+==== sicurezza (account) ====
+	AuthenticationFilter.java
+	LoginServlet.java
+	LogoutServlet.java
+	login.html
+	LoginSuccess.jsp
+
+
+==== logging ====
+	RequestLoggingFilter.java
+
+==== grafica ====
+Sitemesh v.2
+
+==== internazionalizzazione ====
+JSP Standard Tag Library (jstl)
+
+==== logging ====
+filtri di tomcat
+junit ??
+
+
+jquery
+bootstrap
+
+internationalization
+	taglibs-standard-impl-1.2.5
+	Message.properties
+	Message_ES.properties
+	Message_ENproperties
+{{{code: lang="asp" linenumbers="True"
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+<c:set var="language" value="${not empty param.language ? param.language : not empty language ? language : pageContext.request.locale}" scope="session" />
+<fmt:setLocale value="${language}" />
+<fmt:setBundle basename="booking.i18n.Message" var="lang" />
+
+<html >
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>i18n</title>
+</head>
+<body>
+	<fmt:message key="login.label.username" bundle="${lang}"/>
+</body>
+</html>
+
+}}}
+	
+	
+
 ===== Filtri =====
 
 All'interno del file di configurazione di tomcat WEB-INF/web.xml c'è il seguente codice per la definizione dei filtri gestiti da tomcat
