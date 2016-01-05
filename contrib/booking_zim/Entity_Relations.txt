@@ -23,6 +23,7 @@ Il ruolo definisce gli accessi alle funzionalità ed ai dati che la persona ha a
 Un utente può fare una prenotazione e modificare la sua anagrafica, meno il campo ruolo che gli sarà reso invisibile
 Un utente amministratore può accedere a tutto (dati e funzioni)
 Il ruolo sarebbe stato opportuno metterlo in un'altra tabella e quindi creare una relazione (n:m) tra persona e ruolo, ma per semplicità, si è preferito lasciarlo all'interno della persona
+La data di nascita ha un range con anno max =  anno corrente-10 ed anno min = anno corrente-100
 
 ==== Carica ====
 Questa entità identifica le cariche di una società e per ogni carica qual'è la persona che lo ricopre. Il tipo identifica la carica, essendo queste un numero esiguo e conosciuto sono state identificate in una tabella fissa che riporto di seguito:
