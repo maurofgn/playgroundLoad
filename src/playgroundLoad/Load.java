@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,6 +21,9 @@ import java.util.Properties;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mf.dao.CampoDao;
+import org.mf.dao.Dao;
+import org.mf.model.Campo;
 
 public class Load {
 	
@@ -53,7 +57,101 @@ public class Load {
 		loadCampi();
 		loadCariche();
 		loadSoci();
+		loadPreno();
 	}
+	
+	@Test
+	public void loadPreno() {
+		
+		List<IdName> societas = getSocietaID();
+		List<Integer> socs = new ArrayList<Integer>(societas.size());
+		for (IdName idName : societas)
+			socs.add(idName.getId());
+		
+		Hashtable<Integer, List<Integer>> soci = getSoci();	//soci x società
+		
+		CampoDao campoDao = new CampoDao();
+		Hashtable<Integer,  List<Campo>> campi = campoDao.getAllSoc(socs);	//campi x società
+
+		Calendar calendar = GregorianCalendar.getInstance();
+		int nrDay = 5;
+		
+		StringBuffer sb = new StringBuffer();
+		sb.append("INSERT INTO preno "); 
+		sb.append("(socio_id ,campo_id ,data ,ora) VALUES "); 
+		sb.append("(?        ,?        ,?    ,?  ) ");
+		//          1   	  2     	3	  4	 
+		
+		DateFormat df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ITALY);
+		
+		try {
+			PreparedStatement stmt = getConnection().prepareStatement(sb.toString());
+			
+			for (int i = 0; i < nrDay; i++) {
+				
+				System.out.println("data: " + df.format(calendar.getTime()));
+				
+				for (Integer socId : campi.keySet()) {
+					
+					List<Integer> sociSoc = soci.get(socId);	//soci della società
+					List<Campo> campiSoc = campi.get(socId);	//campi della società
+					
+					for (Campo campo : campiSoc) {
+						
+//						Campo campo = getUnCampo(campiSoc);			//un campo casuale
+						
+						System.out.println("campo: " + campo.toString());
+						
+						int nrPreno = 5;
+						int oraInizio = campo.getAperturaOra();
+
+						for (int j = 0; j < nrPreno && oraInizio >= 0; j++) {
+							Integer socio = getUnSocio(sociSoc);			//socio della società
+							oraInizio += Utility.randInt(0, 6);				//ore vuote (libere)
+							
+							if (oraInizio < campo.getChiusuraOra()) {
+								
+								if (oraInizio >=campo.getIntervalloOra() && oraInizio < campo.getIntervalloOra() + campo.getIntervalloOre())
+									oraInizio = campo.getIntervalloOra() + campo.getIntervalloOre();
+								
+								Dao.stmtPara(stmt, 1, Types.INTEGER, socio);
+								Dao.stmtPara(stmt, 2, Types.INTEGER, campo.getId());
+								Dao.stmtPara(stmt, 3, Types.DATE, new java.sql.Date(calendar.getTimeInMillis()));
+								Dao.stmtPara(stmt, 4, Types.INTEGER, oraInizio);
+	
+								stmt.executeUpdate();
+								
+								System.out.println("preno: " + oraInizio + " successiva ora libera: " +  campo.getNextHour(oraInizio));
+								oraInizio = campo.getNextHour(oraInizio);
+							} else
+								oraInizio = -1;
+						}
+					}
+				}
+				calendar.add(Calendar.DAY_OF_YEAR, 1);
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	/**
+	 * estrae un socio casuale in soci
+	 * @param soci
+	 * @return id socio
+	 */
+	private Integer getUnSocio(List<Integer> soci) {
+		if (soci.isEmpty())
+			return null;
+		
+		int index = Utility.randInt(0, soci.size()-1);
+		Integer retValue = soci.get(index);
+//		soci.remove(index);
+		return retValue;
+	}
+	
 	
 	@Test
 	public void loadSocieta() {
@@ -115,7 +213,10 @@ public class Load {
 		StringBuffer sb = new StringBuffer();
 		sb.append(fix);
 		sb.append("(? ,?    ,?        ,8           ,0           ,23          ,13           ,2           ,?         , ?) "); 
-
+		
+		Player player = new Player();
+		
+		
 		List<IdName> societa = getSocietaID();
 		
 		Hashtable<Integer, Integer> prgPerSoc = new Hashtable<Integer, Integer>();
@@ -126,7 +227,6 @@ public class Load {
 			for (int i = 0; i < 30; i++) {
 				
 				IdName rifSoc = societa.get(Utility.randInt(0, societa.size()-1));
-				int endIndex = Math.min(rifSoc.getName().trim().length(), 5);
 				
 				Integer lastPrg = prgPerSoc.get(rifSoc.getId());
 				if (lastPrg == null) 
@@ -134,7 +234,7 @@ public class Load {
 				
 				prgPerSoc.put(rifSoc.getId(), ++lastPrg);
 				
-				stmt.setString(1, rifSoc.getName().substring(0, endIndex).trim() + "_" + lastPrg);
+				stmt.setString(1, player.getNameNotUsed());
 				
 				stmt.setInt(2, Utility.randInt(FondoCampo.Sintetico.ordinal(), FondoCampo.Erba.ordinal()));
 				stmt.setString(3, rifSoc.getName());	//descrizione
@@ -385,7 +485,83 @@ public class Load {
 		return retValue;
 	}
 
+	private Hashtable<Integer, List<Integer>> getSoci() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("select id, societa_ID from socio order by societa_id, id");
+		
+		Hashtable<Integer, List<Integer>> retValue = new Hashtable<Integer, List<Integer>>();
+
+		PreparedStatement stmt = null;
+		try {
+			stmt = getConnection().prepareStatement(sb.toString());
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				
+				List<Integer> soci = retValue.get(rs.getInt(2));
+				
+				if (soci == null) {
+					soci = new ArrayList<Integer>();
+					retValue.put(rs.getInt(2), soci);
+				}
+				
+				soci.add(rs.getInt(1));
+			}
+			
+			stmt.close();
+			
+			disconnect();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			fail("Not yet implemented");
+		} finally {
+			if (stmt != null)
+				try {
+					stmt.close();
+				} catch (SQLException e) { /* NO ACTION */
+				}
+		}
+		
+		return retValue;
+	}
 	
+//	private Hashtable<Integer, List<Integer>> getCampi() {
+//		StringBuffer sb = new StringBuffer();
+//		sb.append("select id, societa_ID from campo order by societa_id, id");
+//		
+//		Hashtable<Integer, List<Integer>> retValue = new Hashtable<Integer, List<Integer>>();
+//
+//		PreparedStatement stmt = null;
+//		try {
+//			stmt = getConnection().prepareStatement(sb.toString());
+//			ResultSet rs = stmt.executeQuery();
+//			while (rs.next()) {
+//				
+//				List<Integer> campi = retValue.get(rs.getInt("societa_ID"));
+//				
+//				if (campi == null) {
+//					campi = new ArrayList<Integer>();
+//					retValue.put(rs.getInt("societa_ID"), campi);
+//				}
+//				
+//				campi.add(rs.getInt("id"));
+//			}
+//			
+//			stmt.close();
+//			
+//			disconnect();
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//			fail("Not yet implemented");
+//		} finally {
+//			if (stmt != null)
+//				try {
+//					stmt.close();
+//				} catch (SQLException e) { /* NO ACTION */
+//				}
+//		}
+//		
+//		return retValue;
+//	}
 	
 	
 	@Test

@@ -135,7 +135,7 @@ public class Nome {
 	}
 
 	public String getPsw() {
-		return nomeCognome("").replaceAll(" ", "").toLowerCase();
+		return "1";	//nomeCognome("").replaceAll(" ", "").toLowerCase();
 	}
 
 	public String getUtente() {
