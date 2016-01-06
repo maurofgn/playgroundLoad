@@ -2,7 +2,7 @@
 select 
 p.id,
 p.utente
-,pg.nome
+,pg.nome campo
 ,b.data
 ,b.ora 
 from persona p 
