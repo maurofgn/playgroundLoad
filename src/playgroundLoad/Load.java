@@ -110,6 +110,8 @@ public class Load {
 							Integer socio = getUnSocio(sociSoc);			//socio della società
 							oraInizio += Utility.randInt(0, 6);				//ore vuote (libere)
 							
+							
+							
 							if (oraInizio < campo.getChiusuraOra()) {
 								
 								if (oraInizio >=campo.getIntervalloOra() && oraInizio < campo.getIntervalloOra() + campo.getIntervalloOre())
@@ -122,10 +124,25 @@ public class Load {
 	
 								stmt.executeUpdate();
 								
+								int consegui = Utility.randInt(0, 4);	//ore conseguitive
+								
+								for (int k = 0; k < consegui; k++) {
+									oraInizio = campo.getNextHour(oraInizio);
+									if (oraInizio > 0) {
+										Dao.stmtPara(stmt, 4, Types.INTEGER, oraInizio);										
+										stmt.executeUpdate();
+									}
+								}
+								
 								System.out.println("preno: " + oraInizio + " successiva ora libera: " +  campo.getNextHour(oraInizio));
 								oraInizio = campo.getNextHour(oraInizio);
 							} else
 								oraInizio = -1;
+							
+							
+							
+							
+							
 						}
 					}
 				}
