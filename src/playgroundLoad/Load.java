@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
@@ -430,10 +431,12 @@ public class Load {
 		
 		DateFormat df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ITALY);
 		Nomi people = new Nomi();
+		HashSet<String> used = new HashSet<String>();
 		
 		for (int i = 0; i < 100; i++) {
 			Nome nome = people.getNameNotUsed();
-			System.out.println(nome.toString() + " " + nome.getCodiceFiscale() + " " + nome.getCitta() + " " + df.format(nome.getNascita()) + " " + nome.getGenere());
+			nome.setUtente(uniqueUser(used, nome.getNome(), 0));
+			System.out.println(nome.toString() + " " + nome.getUtente() + " " + nome.getCodiceFiscale() + " " + nome.getCitta() + " " + df.format(nome.getNascita()) + " " + nome.getGenere());
 		}
 	}
 	
@@ -574,6 +577,7 @@ public class Load {
 		
 		Nomi people = new Nomi();
 		DateFormat df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ITALY);
+		HashSet<String> used = new HashSet<String>();
 
 		PreparedStatement stmt = null;
 		try {
@@ -583,11 +587,13 @@ public class Load {
 				if (i == 0) {
 					Nome amm = Nome.amministratore;
 					amm.setRuolo("A");
+					amm.setUtente(uniqueUser(used, amm.getNome(), 0));
 					setPersona(stmt, amm);
 					stmt.executeUpdate();
 				}
 				
 				Nome nome = people.getNameNotUsed();
+				nome.setUtente(uniqueUser(used, nome.getNome(), 0));
 				System.out.println(nome.toString() + " " + nome.getCodiceFiscale() + " " + nome.getCitta() + " " + df.format(nome.getNascita()) + " " + nome.getGenere());
 				
 				setPersona(stmt, nome);
@@ -632,6 +638,16 @@ public class Load {
 		stmt.setString(9, nome.getRuolo());
 		stmt.setDate(10, new java.sql.Date(nome.getNascita().getTime()));
 		stmt.setString(11, nome.getGenere());
+	}
+	
+	private String uniqueUser(HashSet<String> used, String nome, int prg) {
+		if (used.contains(nome)) {
+			prg++;
+			nome = uniqueUser(used, nome + prg, prg);
+		} else
+			used.add(nome);
+		return nome;
+			
 	}
 	
 	// connect database
