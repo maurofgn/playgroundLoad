@@ -15,6 +15,7 @@ public class Nome {
 	private Comune comune;
 	private String genere; 
 	private String ruolo;
+	private String utente;
 	
 	Comune[] comuni = { new Comune("C715", "Cinzano"),
 			new Comune("L191", "Tolentino"),
@@ -138,8 +139,12 @@ public class Nome {
 		return "1";	//nomeCognome("").replaceAll(" ", "").toLowerCase();
 	}
 
+	public void setUtente(String utente) {
+		this.utente = utente;
+	}
+	
 	public String getUtente() {
-		return nomeCognome(".").replaceAll(" ", "");
+		return utente == null ? nomeCognome(".").replaceAll(" ", "") : utente;
 	}
 	
 	
