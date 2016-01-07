@@ -1,6 +1,7 @@
 --prenotazione in data odierna in cui compare l'utente
 select 
 p.id,
+u.id,
 p.utente
 ,pg.nome campo
 ,b.data
