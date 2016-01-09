@@ -1,0 +1,48 @@
+diGraph fasi {
+
+size ="6,6";
+
+target [label="obbiettivi"];
+ana  [label="analisi"];
+
+erd  [label="ERD"];
+blddb  [label="creazione\ndb"];
+dataTest [label="dati di test"];
+preno [label="sviluppo\nbooking"];
+sub_acc  [label="sub sis.\naccessi"];
+sub_int  [label="sub sis.\nintern."];
+sub_graph  [label="sub sis.\ngrafica"];
+sub_log [label="sub sis.\nlogging"];
+
+target -> ana -> erd -> blddb;
+blddb -> dataTest;
+blddb -> preno;
+preno -> sub_acc;
+preno -> sub_int;
+preno -> sub_graph;
+preno -> sub_log;
+
+core [label="booking\ncore"];
+jq [label="javascript\n(JQuery)"];
+
+preno -> crud;
+preno -> core;
+
+core -> MVC
+crud -> MVC
+
+MVC -> Model;
+MVC -> View;
+MVC-> Controller;
+
+Controller -> Model;
+Controller -> View;
+
+View -> jsp;
+jsp -> html;
+jsp -> java;
+jsp -> jstl;
+jsp -> css;
+jsp -> jq
+}
+

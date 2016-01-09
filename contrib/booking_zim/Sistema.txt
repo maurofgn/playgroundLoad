@@ -19,9 +19,9 @@ taglibs-standard-impl-1.2.5
 
 ===== Step di sviluppo =====
 
-{{./diagram.png?type=diagram}}
 
 
+{{./diagram001.png?type=diagram}}
 
 
 ===== CRUD =====
@@ -52,12 +52,11 @@ WebContent///tabella//.jsp
 Sitemesh v.2
 
 ==== internazionalizzazione ====
-JSP Standard Tag Library (jstl)
+Java Standard Tag Library (jstl)
 
 ==== logging ====
 filtri di tomcat
 junit ??
-
 
 jquery
 bootstrap
@@ -86,7 +85,6 @@ internationalization
 </html>
 
 }}}
-	
 	
 
 ===== Filtri =====
