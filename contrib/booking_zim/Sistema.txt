@@ -19,8 +19,6 @@ taglibs-standard-impl-1.2.5
 
 ===== Step di sviluppo =====
 
-
-
 {{./diagram001.png?type=diagram}}
 
 

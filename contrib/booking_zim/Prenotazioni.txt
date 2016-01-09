@@ -10,6 +10,7 @@ Una persona può essere socio di nessuna, una o più società. I campi disponibi
 Possono essere prenotate le ore libere, cioè quelle raffigurate dal colore verde nella tabella seguente, di una qualsiasi data futura fino ad una data massima uguale alla corrente più quindici giorni, mentre se la data di prenotazione è uguale alla data corrente, si possono prenotare ore libere a partire dall'ora corrente + 1
 Le ore precedentemente prenotate possono essere rese libere, a condizione che siano nel futuro per almeno quattro ore rispetto all'ora corrente.
 La pagina delle prenotazioni deve fare un refresh automatico ogni ora.
+Un utente normale non può inserire in modo manuale una data, ma deve scieglierla attraverso il calendario, mentre un utente amministratore, oltre ad avere il calendario, può inserire una data qualsiasi, anche nel passato.
 
 
 
