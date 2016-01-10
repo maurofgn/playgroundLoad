@@ -24,7 +24,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mf.dao.CampoDao;
 import org.mf.dao.Dao;
+import org.mf.dao.PersonaDao;
 import org.mf.model.Campo;
+import org.mf.model.Persona;
+import org.mf.model.Societa;
 
 public class Load {
 	
@@ -44,6 +47,7 @@ public class Load {
 	
 	private Connection connection;
 	private Properties properties;
+	private Persona amministratore;
 	
 
 	@Before
@@ -85,6 +89,11 @@ public class Load {
 		
 		DateFormat df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ITALY);
 		
+		getAmministatore();
+		PersonaDao pdao = new PersonaDao();
+		List<Societa> socsAmm = pdao.getSocieta(amministratore.getId());
+		amministratore = null;
+		
 		try {
 			PreparedStatement stmt = getConnection().prepareStatement(sb.toString());
 			
@@ -98,19 +107,22 @@ public class Load {
 					List<Campo> campiSoc = campi.get(socId);	//campi della società
 					
 					for (Campo campo : campiSoc) {
-						
-//						Campo campo = getUnCampo(campiSoc);			//un campo casuale
-						
 						System.out.println("campo: " + campo.toString());
 						
 						int nrPreno = 5;
 						int oraInizio = campo.getAperturaOra();
 
 						for (int j = 0; j < nrPreno && oraInizio >= 0; j++) {
-							Integer socio = getUnSocio(sociSoc);			//socio della società
-							oraInizio += Utility.randInt(0, 6);				//ore vuote (libere)
 							
+							Integer socio = null;
+							if (socsAmm.contains(socId)) {
+								socsAmm.remove(socId);
+								getAmministatore();
+							}
 							
+							socio = amministratore == null ? getUnSocio(sociSoc) : amministratore.getId();	//socio della società
+							amministratore = null;
+							oraInizio += Utility.randInt(0, 6);		//ore vuote (libere)
 							
 							if (oraInizio < campo.getChiusuraOra()) {
 								
@@ -138,11 +150,6 @@ public class Load {
 								oraInizio = campo.getNextHour(oraInizio);
 							} else
 								oraInizio = -1;
-							
-							
-							
-							
-							
 						}
 					}
 				}
@@ -176,13 +183,13 @@ public class Load {
 		
 		String[] sql = getSocSql();
 		
-		List<IdName> idList = getPeopleID();
+		List<Persona> idList = getPeople();
 		
 		PreparedStatement stmt = null;
 		try {
 			for (int i = 0; i < sql.length; i++) {
 				stmt = getConnection().prepareStatement(sql[i]);
-				IdName rif = idList.get(Utility.randInt(0, idList.size()-1));
+				Persona rif = idList.get(Utility.randInt(0, idList.size()-1));
 				stmt.setInt(1, rif.getId());
 				stmt.executeUpdate();
 			}
@@ -230,20 +237,22 @@ public class Load {
 		String fix = "INSERT INTO campo (nome ,tipo ,descrizione,apertura_Ora ,apertura_Min ,chiusura_Ora ,intervallo_Ora ,intervallo_Ore ,societa_id, sequenza) VALUES ";
 		StringBuffer sb = new StringBuffer();
 		sb.append(fix);
-		sb.append("(? ,?    ,?        ,8           ,0           ,23          ,13           ,2           ,?         , ?) "); 
+		sb.append("(? ,?    ,?        ,?           ,0           ,?          ,13           ,2           ,?         , ?) "); 
 		
 		Player player = new Player();
-		
 		
 		List<IdName> societa = getSocietaID();
 		
 		Hashtable<Integer, Integer> prgPerSoc = new Hashtable<Integer, Integer>();
-		
+
 		PreparedStatement stmt = null;
 		try {
 			stmt = getConnection().prepareStatement(sb.toString());
 			for (int i = 0; i < 30; i++) {
 				
+				int apertura = 8;
+				int chiusura = 23;
+
 				IdName rifSoc = societa.get(Utility.randInt(0, societa.size()-1));
 				
 				Integer lastPrg = prgPerSoc.get(rifSoc.getId());
@@ -256,8 +265,16 @@ public class Load {
 				
 				stmt.setInt(2, Utility.randInt(FondoCampo.Sintetico.ordinal(), FondoCampo.Erba.ordinal()));
 				stmt.setString(3, rifSoc.getName());	//descrizione
-				stmt.setInt(4, rifSoc.getId());
-				stmt.setInt(5, lastPrg*10);
+				
+				apertura += Utility.randInt(0, 2);
+				chiusura -= Utility.randInt(0, 2);
+				
+				stmt.setInt(4, apertura);
+				stmt.setInt(5, chiusura);
+				
+				stmt.setInt(6, rifSoc.getId());
+				stmt.setInt(7, lastPrg*10);
+				
 				stmt.executeUpdate();
 			}
 			stmt.close();
@@ -283,7 +300,8 @@ public class Load {
 		sb.append("(?    ,?         ,?        ) ");
 		
 		List<IdName> societa = getSocietaID();
-		List<IdName> people = getPeopleID(); 
+		List<Persona> people = getPeople();
+		getAmministatore();
 		
 		PreparedStatement stmt = null;
 		try {
@@ -293,9 +311,12 @@ public class Load {
 				for (Cariche carica : Cariche.values()) {
 					stmt.setInt(1, carica.ordinal());
 					stmt.setInt(2, oneSoc.getId());
-					IdName idName = getOneName(people);
+					
+					Persona idName = amministratore != null ? amministratore :  getOneName(people);
+					amministratore = null;
+					
 					if (idName == null) {
-						System.out.println("Non ci sono nome da estrarre");
+						System.out.println("Non ci sono nomi da usare per estrarre un nome casuale");
 						System.exit(1);
 					}
 					stmt.setInt(3, idName.getId());
@@ -335,14 +356,13 @@ public class Load {
 	public void loadSoci() {
 		
 		List<IdName> societa = getSocietaID();
-		List<IdName> people = getPeopleID(); 
-		Hashtable<Integer, IdName> people2 = new Hashtable<Integer, IdName>(people.size()); 
+		List<Persona> people = getPeople(); 
+		Hashtable<Integer, Persona> people2 = new Hashtable<Integer, Persona>(people.size()); 
 		Hashtable<Integer, Integer> prgPerSoc = new Hashtable<Integer, Integer>();
 		
-		for (IdName idName : people) {
-			people2.put(idName.getId(), idName);
-		}
-		
+		for (Persona persona : people) 
+			people2.put(persona.getId(), persona);
+				
 		Calendar calendar = GregorianCalendar.getInstance();
 		calendar.set(Calendar.HOUR_OF_DAY, 0);
 		Date minDate = calendar.getTime();
@@ -395,7 +415,7 @@ public class Load {
 		
 		int maxSociPerSocieta = (people2.size()) / societa.size();	//nr persone max per società
 		
-		people = new ArrayList<IdName>(people2.values());			//persone senza cariche
+		people = new ArrayList<Persona>(people2.values());			//persone senza cariche
 		
 		try {
 			for (IdName oneSoc : societa) {
@@ -405,7 +425,7 @@ public class Load {
 				for (int i = 0; i < nrSoci; i++) {
 					
 					int idSoc = oneSoc.getId();
-					IdName idName = getOneName(people);
+					Persona persona = getOneName(people);
 					int tessera = getNextPrgPerSoc(prgPerSoc, idSoc);
 					Date scade = Utility.randDate(minDate, 365, true);
 					int annoIni = Utility.randInt(year-10, year);
@@ -414,7 +434,7 @@ public class Load {
 					stmtIns.setInt(2, annoIni);
 					stmtIns.setDate(3, new java.sql.Date(scade.getTime()));
 					stmtIns.setInt(4, idSoc);
-					stmtIns.setInt(5, idName.getId());
+					stmtIns.setInt(5, persona.getId());
 					stmtIns.executeUpdate();
 				}
 				
@@ -432,6 +452,11 @@ public class Load {
 				} catch (SQLException e) { /* NO ACTION */
 				}
 		}
+		
+		
+		
+		
+		
 	}
 	
 	private int getNextPrgPerSoc(Hashtable<Integer, Integer> prgPerSoc, int key) {
@@ -458,18 +483,19 @@ public class Load {
 	}
 	
 	@Test
-	public void getPeopleIDTest() {
-		List<IdName> idNames = getPeopleID();
-		for (IdName idName : idNames) {
-			System.out.println(idName);
+	public void getPeopleTest() {
+		List<Persona> names = getPeople();
+		for (Persona name : names) {
+			System.out.println(name);
 		}
 	}
 	
-	public List<IdName> getPeopleID() {
-		return getTableID("persona");
+	private List<Persona> getPeople() {
+		PersonaDao dao = new PersonaDao();
+		return dao.getAll();
 	}
 	
-	public List<IdName> getSocietaID() {
+	private List<IdName> getSocietaID() {
 		return getTableID("societa");
 	}
 	
@@ -507,7 +533,12 @@ public class Load {
 
 	private Hashtable<Integer, List<Integer>> getSoci() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("select id, societa_ID from socio order by societa_id, id");
+		
+		sb.append("select "); 
+		sb.append("s.id, s.societa_ID "); 
+		sb.append("from socio s "); 
+		sb.append("inner join persona p on p.id = s.persona_id "); 
+		sb.append("order by s.societa_id, p.ruolo, s.id ");
 		
 		Hashtable<Integer, List<Integer>> retValue = new Hashtable<Integer, List<Integer>>();
 
@@ -523,12 +554,9 @@ public class Load {
 					soci = new ArrayList<Integer>();
 					retValue.put(rs.getInt(2), soci);
 				}
-				
 				soci.add(rs.getInt(1));
 			}
-			
 			stmt.close();
-			
 			disconnect();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -544,45 +572,15 @@ public class Load {
 		return retValue;
 	}
 	
-//	private Hashtable<Integer, List<Integer>> getCampi() {
-//		StringBuffer sb = new StringBuffer();
-//		sb.append("select id, societa_ID from campo order by societa_id, id");
-//		
-//		Hashtable<Integer, List<Integer>> retValue = new Hashtable<Integer, List<Integer>>();
-//
-//		PreparedStatement stmt = null;
-//		try {
-//			stmt = getConnection().prepareStatement(sb.toString());
-//			ResultSet rs = stmt.executeQuery();
-//			while (rs.next()) {
-//				
-//				List<Integer> campi = retValue.get(rs.getInt("societa_ID"));
-//				
-//				if (campi == null) {
-//					campi = new ArrayList<Integer>();
-//					retValue.put(rs.getInt("societa_ID"), campi);
-//				}
-//				
-//				campi.add(rs.getInt("id"));
-//			}
-//			
-//			stmt.close();
-//			
-//			disconnect();
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//			fail("Not yet implemented");
-//		} finally {
-//			if (stmt != null)
-//				try {
-//					stmt.close();
-//				} catch (SQLException e) { /* NO ACTION */
-//				}
-//		}
-//		
-//		return retValue;
-//	}
-	
+	private Persona getAmministatore() {
+		
+		if (amministratore != null)
+			return amministratore;
+		
+		PersonaDao dao = new PersonaDao();
+		amministratore = dao.getOneAmministratore();
+		return amministratore;
+	}
 	
 	@Test
 	public void loadPeople() {
@@ -602,7 +600,11 @@ public class Load {
 			for (int i = 0; i < 100; i++) {
 				
 				if (i == 0) {
-					Nome amm = Nome.amministratore;
+					Nome amm = new Nome("Marco", "Feliziani",
+							"via Trivelli, 1", "M", "A", 
+							new Comune("I156", "San Severino Marche"),
+							new GregorianCalendar(1993, 9, 3).getTime());	//mese 0 based
+
 					amm.setRuolo("A");
 					amm.setUtente(uniqueUser(used, amm.getNome(), 0));
 					setPersona(stmt, amm);
@@ -614,17 +616,7 @@ public class Load {
 				System.out.println(nome.toString() + " " + nome.getCodiceFiscale() + " " + nome.getCitta() + " " + df.format(nome.getNascita()) + " " + nome.getGenere());
 				
 				setPersona(stmt, nome);
-				
-//				stmt.setString(1, nome.getNome());
-//				stmt.setString(2, nome.getCognome());
-//				stmt.setString(3, nome.getCitta());
-//				stmt.setString(4, nome.getInidirizzo());
-//				stmt.setString(5, nome.getMail());
-//				stmt.setString(6, nome.getCodiceFiscale());
-//				stmt.setString(7, nome.getPsw());
-//				stmt.setString(8, nome.getUtente());
-//				stmt.setDate(9, new java.sql.Date(nome.getNascita().getTime()));
-//				stmt.setString(10, nome.getGenere());
+
 				stmt.executeUpdate();
 			}
 
@@ -710,49 +702,49 @@ public class Load {
 	 * @param people
 	 * @return
 	 */
-	private IdName getOneName(List<IdName> people) {
+	private Persona getOneName(List<Persona> people) {
 		if (people.isEmpty())
 			return null;
 		
 		int index = Utility.randInt(0, people.size()-1);
-		IdName retValue = people.get(index);
+		Persona retValue = people.get(index);
 		people.remove(index);
 		return retValue;
 	}
 	
 	
 	
-	class Persona {
-
-		public Persona(String nome, String cognome, String citta, String prov,
-				String indirizzo, String telefono, String mail, String codFisc,
-				String psw, String utente, String ruolo) {
-			
-			super();
-			this.nome = nome;
-			this.cognome = cognome;
-			this.citta = citta;
-			this.prov = prov;
-			this.indirizzo = indirizzo;
-			this.telefono = telefono;
-			this.mail = mail;
-			this.codFisc = codFisc;
-			this.psw = psw;
-			this.utente = utente;
-			this.ruolo = ruolo;
-		}
-		
-		String nome;
-		String cognome;
-		String citta;
-		String prov;
-		String indirizzo;
-		String telefono;
-		String mail;
-		String codFisc;
-		String psw;
-		String utente;
-		String ruolo;
-	}
+//	class Persona {
+//
+//		public Persona(String nome, String cognome, String citta, String prov,
+//				String indirizzo, String telefono, String mail, String codFisc,
+//				String psw, String utente, String ruolo) {
+//			
+//			super();
+//			this.nome = nome;
+//			this.cognome = cognome;
+//			this.citta = citta;
+//			this.prov = prov;
+//			this.indirizzo = indirizzo;
+//			this.telefono = telefono;
+//			this.mail = mail;
+//			this.codFisc = codFisc;
+//			this.psw = psw;
+//			this.utente = utente;
+//			this.ruolo = ruolo;
+//		}
+//		
+//		String nome;
+//		String cognome;
+//		String citta;
+//		String prov;
+//		String indirizzo;
+//		String telefono;
+//		String mail;
+//		String codFisc;
+//		String psw;
+//		String utente;
+//		String ruolo;
+//	}
 		
 }
