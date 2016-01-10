@@ -603,7 +603,7 @@ public class Load {
 					Nome amm = new Nome("Marco", "Feliziani",
 							"via Trivelli, 1", "M", "A", 
 							new Comune("I156", "San Severino Marche"),
-							new GregorianCalendar(1993, 9, 3).getTime());	//mese 0 based
+							new GregorianCalendar(1993, 11, 29).getTime());	//mese 0 based, 29 dicembre del 1993
 
 					amm.setRuolo("A");
 					amm.setUtente(uniqueUser(used, amm.getNome(), 0));

@@ -5,7 +5,7 @@ import java.util.GregorianCalendar;
 
 public class Nome {
 
-	public static final Nome amministratore = new Nome("Marco", "Feliziani", "via Trivelli, 1", "M", "A", new Comune("I156", "San Severino Marche"));
+//	public static final Nome amministratore = new Nome("Marco", "Feliziani", "via Trivelli, 1", "M", "A", new Comune("I156", "San Severino Marche"));
 	
 	private String nome;
 	private String cognome;
@@ -28,19 +28,19 @@ public class Nome {
 	private int yearMin = yearMax-50;
     
 	public Nome(String nome, String cognome, String inidirizzo) {
-		this(nome, cognome, inidirizzo, Utility.randBool() ? "M" : "F", "U", null);
+		this(nome, cognome, inidirizzo, Utility.randBool() ? "M" : "F", "U", null, null);
 	}
 	
-	public Nome(String nome, String cognome, String inidirizzo, String genere, String ruolo, Comune comune) {
+	public Nome(String nome, String cognome, String inidirizzo, String genere, String ruolo, Comune comune, Date nascita) {
 		super();
 		this.nome = Utility.toCamelCaseSpace(nome);
 		this.cognome = Utility.toCamelCaseSpace(cognome);
 		this.inidirizzo = inidirizzo;
-		nascita = Utility.randDate(yearMin, yearMax);
+		this.nascita = nascita != null ? nascita : Utility.randDate(yearMin, yearMax);
 		this.comune = comune == null ? comuni[Utility.randInt(0, comuni.length-1)] : comune;
 		this.genere = genere.toUpperCase();
 		this.ruolo = ruolo;
-		codFisc = Utility.calcoloCodiceFiscale(cognome, nome, nascita, this.comune.getCodReg(), genere.equalsIgnoreCase("M"));
+		codFisc = Utility.calcoloCodiceFiscale(cognome, nome, this.nascita, this.comune.getCodReg(), genere.equalsIgnoreCase("M"));
 	}
 
 	public String getNome() {
