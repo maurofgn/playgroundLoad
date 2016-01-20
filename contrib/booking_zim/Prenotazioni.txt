@@ -15,3 +15,12 @@ Un utente normale non può inserire in modo manuale una data, ma deve scieglierl
 
 
 {{./pasted_image003.png}}
+
+====== Funzionialità ======
+
+* il click sul logo va sulla pagina iniziale (Prenotazioni)
+* Se l'utente connesso è amministratore ha a disposizione un bottone che se premuto elenca un menù per eseguire altre funzinalità (Socio, Società ..)
+* cliccando sul nome si accede alla modifica dell'anagrafica utente
+* La scelta di una bandiera permette la definizione del linguaggio corrispondente
+* il click sull'immagine in alto a dx, esegue il logout
+* sotto la tabella delle prenotazioni, a dx del bottone invio, c'è un link che permette d'avere la lista delle prenotazione (dalla data odierna in poi) dell'utente attualmente connesso, se però l'utente è un amministratore, allora viene visualizzata una form che permette di definire un filtro delle prenotazioni da elencare
